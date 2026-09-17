@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f7ff"/>
+      <stop offset="50%" stop-color="#e2effe"/>
+      <stop offset="100%" stop-color="#d6e8fc"/>
+    </linearGradient>
+    <linearGradient id="glassGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.35"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d9ff"/>
+      <stop offset="50%" stop-color="#0099ff"/>
+      <stop offset="100%" stop-color="#2563ff"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#0066cc" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bgGrad)" filter="url(#softShadow)"/>
+  
+  <!-- Outer Glass Boundary -->
+  <rect x="28" y="28" width="456" height="456" rx="96" fill="url(#glassGrad)" stroke="#ffffff" stroke-width="4" stroke-opacity="0.9"/>
+  
+  <!-- Specular glare top-left -->
+  <path d="M48 96 C 48 60, 70 48, 116 48 L 400 48 C 360 80, 200 130, 48 96 Z" fill="#ffffff" fill-opacity="0.5"/>
+
+  <!-- Glowing Outer Neon Shield Ring -->
+  <path d="M256 90 L380 145 C380 270, 290 375, 256 405 C222 375, 132 270, 132 145 Z" 
+        fill="none" stroke="url(#shieldGrad)" stroke-width="14" stroke-linejoin="round" filter="url(#glow)" opacity="0.85"/>
+
+  <!-- Inner Frosted Glass Shield -->
+  <path d="M256 108 L360 156 C360 262, 285 352, 256 380 C227 352, 152 262, 152 156 Z" 
+        fill="url(#glassGrad)" stroke="#ffffff" stroke-width="3" stroke-opacity="0.9"/>
+
+  <!-- Engine Telemetry / Waveform inside Shield -->
+  <!-- Check Engine outline -->
+  <g transform="translate(166, 175) scale(0.75)" stroke="#0077ff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Engine Body -->
+    <path d="M24 80 L24 160 L64 160 L64 184 L176 184 L176 160 L216 160 L216 80 L184 80 L184 56 L160 56 L160 40 L80 40 L80 56 L56 56 L56 80 Z" stroke="#00b4d8" stroke-width="7"/>
+    <!-- ECG / Telemetry Heartbeat pulse -->
+    <path d="M48 120 L88 120 L104 88 L124 152 L140 104 L152 120 L192 120" stroke="#00d9ff" stroke-width="10" filter="url(#glow)"/>
+    <!-- WiFi signal waves on top right -->
+    <path d="M190 32 A 40 40 0 0 1 230 72" stroke="#00d9ff" stroke-width="8"/>
+    <path d="M204 16 A 60 60 0 0 1 254 66" stroke="#2563ff" stroke-width="8"/>
+  </g>
+
+  <!-- P_Motor Core Indicator Dot -->
+  <circle cx="256" cy="425" r="8" fill="#00e676" filter="url(#glow)"/>
+</svg>
