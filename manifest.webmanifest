@@ -7,10 +7,11 @@
   "scope": "/wifipaish/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#E6F7FF",
   "background_color": "#F0F4FA",
+  "theme_color": "#00D9FF",
   "dir": "rtl",
   "lang": "fa",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "/wifipaish/pwa-192x192.png",
@@ -29,6 +30,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/wifipaish/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
