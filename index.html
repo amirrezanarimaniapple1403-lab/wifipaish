@@ -21,8 +21,7 @@
     <link rel="icon" type="image/svg+xml" href="/wifipaish/icon.svg" />
     <link rel="apple-touch-icon" href="/wifipaish/apple-touch-icon.png" />
 
-    <!-- فونت‌ها از jsDelivr -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <!-- فونت Vazirmatn محلی (برای اطمینان) -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
@@ -32,24 +31,37 @@
       href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.0/index.css"
     />
 
-    <!-- ⚠️ فونت Material Symbols — این را در بالای style اصلی نگه دار -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/material-symbols@0.14.0/outlined.css"
-    />
-
-    <!-- ⚠️⚠️ خیلی مهم: CSS اصلی بیلد شده — این باید قبل از <style> زیر باشد -->
+    <!-- ⭐⭐⭐ CSS اصلی بیلد — اولین CSS در head -->
     <link rel="stylesheet" crossorigin href="/wifipaish/assets/index-BpV5eF3M.css" />
 
-    <!-- ⚠️⚠️⚠️ خیلی مهم‌تر: این استایل باید بعد از CSS اصلی باشد تا Tailwind را override کند -->
+    <!-- ⭐⭐⭐ استایل نهایی — آخرین چیز در head و با بالاترین specificity -->
     <style>
-      /* با !important روی همه پراپرتی‌های حیاتی، از override شدن جلوگیری می‌کنیم */
-      span.material-symbols-outlined,
+      /* ۱. تعریف @font-face از فایل محلی ریپو */
+      @font-face {
+        font-family: 'Material Symbols Outlined';
+        font-style: normal;
+        font-weight: 100 700;
+        font-display: block;
+        src: url('/wifipaish/MaterialSymbolsOutlined.woff2') format('woff2');
+      }
+
+      /* ۲. ⚠️ حیاتی‌ترین خط: روی <html> باید font-feature-settings فعال شود */
+      /* چون Tailwind روی html می‌گذارد font-feature-settings: normal */
+      /* و این باعث می‌شود ligatures آیکون‌ها خاموش شوند */
+      html,
+      html * {
+        -webkit-font-feature-settings: 'liga' 1, 'clig' 1, 'calt' 1 !important;
+        font-feature-settings: 'liga' 1, 'clig' 1, 'calt' 1 !important;
+      }
+
+      /* ۳. استایل اختصاصی کلاس آیکون با بالاترین specificity ممکن */
+      html body span.material-symbols-outlined,
+      html body .material-symbols-outlined,
       .material-symbols-outlined {
-        font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif !important;
+        font-family: 'Material Symbols Outlined' !important;
         font-weight: normal !important;
         font-style: normal !important;
-        font-size: inherit;
+        font-size: 24px !important;
         line-height: 1 !important;
         letter-spacing: normal !important;
         text-transform: none !important;
@@ -57,24 +69,29 @@
         white-space: nowrap !important;
         word-wrap: normal !important;
         direction: ltr !important;
-        /* ⭐ این دو خط کلید حل مشکل هستند */
-        -webkit-font-feature-settings: 'liga' 1 !important;
-        font-feature-settings: 'liga' 1 !important;
-        -webkit-font-variant-ligatures: normal !important;
-        font-variant-ligatures: normal !important;
+        -webkit-font-feature-settings: 'liga' 1, 'clig' 1, 'calt' 1 !important;
+        font-feature-settings: 'liga' 1, 'clig' 1, 'calt' 1 !important;
+        -webkit-font-variant-ligatures: contextual common-ligatures !important;
+        font-variant-ligatures: contextual common-ligatures !important;
         -webkit-font-smoothing: antialiased !important;
         -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+      }
+
+      /* ۴. محافظت اضافی: هر عنصر با کلمه‌های آیکون */
+      html body [class*='material-symbols'] {
+        font-family: 'Material Symbols Outlined' !important;
+        font-feature-settings: 'liga' 1, 'clig' 1, 'calt' 1 !important;
       }
     </style>
   </head>
   <body>
     <div id="root"></div>
 
-    <!-- ماژول اصلی بیلد — همیشه بعد از style -->
+    <!-- ⭐ ماژول اصلی بیلد — آخرین چیز در body -->
     <script type="module" crossorigin src="/wifipaish/assets/index-DM0k0FL-.js"></script>
 
     <script>
-      // ثبت Service Worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
           navigator.serviceWorker
@@ -87,13 +104,6 @@
             });
         });
       }
-
-      window.addEventListener('beforeinstallprompt', function () {
-        console.log('[wifipaish] Install prompt available ✓');
-      });
-      window.addEventListener('appinstalled', function () {
-        console.log('[wifipaish] App installed ✓');
-      });
     </script>
   </body>
 </html>
