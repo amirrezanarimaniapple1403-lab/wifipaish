@@ -15,20 +15,60 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="P_Motor DIAG" />
 
-    <!-- ✅ PWA — مسیرهای مطلق با /wifipaish/ -->
+    <!-- ✅ PWA Manifest -->
     <link rel="manifest" href="/wifipaish/manifest.webmanifest" />
     <link rel="icon" type="image/png" href="/wifipaish/pwa-192x192.png" />
     <link rel="icon" type="image/svg+xml" href="/wifipaish/icon.svg" />
     <link rel="apple-touch-icon" href="/wifipaish/apple-touch-icon.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <!-- ✅ فونت Vazirmatn و Space Grotesk از jsDelivr (کار می‌کند در ایران) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.0/index.css"
+    />
 
-    <!-- ✅ فایل‌های بیلد با مسیر مطلق /wifipaish/ -->
+    <!-- ✅ Material Symbols از jsDelivr (جایگزین Google Fonts برای ایران) -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/material-symbols@0.14.0/outlined.css"
+    />
+
+    <!-- ✅ CSS کمکی: تعریف کلاس material-symbols-outlined به صورت صریح -->
+    <style>
+      .material-symbols-outlined {
+        font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-feature-settings: 'liga';
+      }
+
+      /* فالبک در صورت عدم بارگذاری فونت: آیکون‌ها را با emoji نشان بده */
+      @supports not (font-variation-settings: normal) {
+        .material-symbols-outlined {
+          font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif;
+        }
+      }
+    </style>
+
+    <!-- ✅ فایل‌های بیلد با مسیر مطلق -->
     <script type="module" crossorigin src="/wifipaish/assets/index-DM0k0FL-.js"></script>
-    <link rel="stylesheet" crossorigin href="/wifipaish/assets/index-BpV5eF3M.css">
+    <link rel="stylesheet" crossorigin href="/wifipaish/assets/index-BpV5eF3M.css" />
   </head>
   <body>
     <div id="root"></div>
@@ -47,7 +87,7 @@
         });
       }
 
-      // لاگ دیباگ
+      // لاگ دیباگ برای نصب PWA
       window.addEventListener('beforeinstallprompt', function () {
         console.log('[wifipaish] Install prompt available ✓');
       });
