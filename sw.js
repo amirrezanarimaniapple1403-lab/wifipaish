@@ -1,13 +1,13 @@
-// P_Motor DIAG WiFi Guardian - Production Service Worker
-const CACHE_NAME = 'pmotor-diag-v1';
+// P_Motor DIAG WiFi Guardian - Service Worker (GitHub Pages compatible)
+const CACHE_NAME = 'pmotor-diag-v2';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/icon.svg',
-  '/pwa-192x192.png',
-  '/pwa-512x512.png',
-  '/apple-touch-icon.png'
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icon.svg',
+  './pwa-192x192.png',
+  './pwa-512x512.png',
+  './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,15 +37,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Do not intercept API or chrome extension requests
+  // API requests را رد کن (به سرور واقعی می‌رود)
   if (event.request.url.includes('/api/')) {
     return;
   }
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
       return fetch(event.request).then((networkResponse) => {
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
@@ -56,24 +62,23 @@ self.addEventListener('fetch', (event) => {
         });
         return networkResponse;
       }).catch(() => {
-        // Fallback for navigation requests
         if (event.request.mode === 'navigate') {
-          return caches.match('/');
+          return caches.match('./index.html');
         }
       });
     })
   );
 });
 
-// Real Web Push Notification listener
+// Web Push
 self.addEventListener('push', (event) => {
   let data = {
     title: 'P_Motor DIAG Alert',
     body: 'ارتباط دستگاه دیاگ قطع شده است! لطفاً بررسی فرمایید.',
-    icon: '/pwa-192x192.png',
-    badge: '/icon.svg',
+    icon: './pwa-192x192.png',
+    badge: './icon.svg',
     vibrate: [400, 200, 400, 200, 800],
-    data: { url: '/?alert=true' }
+    data: { url: './?alert=true' }
   };
 
   if (event.data) {
@@ -99,14 +104,12 @@ self.addEventListener('push', (event) => {
     ]
   };
 
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  const targetUrl = (event.notification.data && event.notification.data.url) || './';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
