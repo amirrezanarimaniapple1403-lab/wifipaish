@@ -1,20 +1,21 @@
-// P_Motor DIAG WiFi Guardian - Service Worker (GitHub Pages compatible)
-const CACHE_NAME = 'pmotor-diag-v2';
+// P_Motor DIAG WiFi Guardian - Service Worker
+const CACHE_NAME = 'pmotor-diag-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icon.svg',
   './pwa-192x192.png',
   './pwa-512x512.png',
   './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW] Caching assets');
       return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('[SW] Cache addAll warning:', err);
+        console.warn('[SW] Some assets failed to cache:', err);
       });
     })
   );
@@ -22,26 +23,30 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating...');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', key);
             return caches.delete(key);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // API requests را رد کن (به سرور واقعی می‌رود)
+  // درخواست‌های API به سرور واقعی بروند
   if (event.request.url.includes('/api/')) {
     return;
   }
 
+  if (event.request.method !== 'GET') return;
+
+  // درخواست‌های ناوبری (صفحه اصلی)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => caches.match('./index.html'))
@@ -49,18 +54,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // بقیه درخواست‌ها از cache
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+      return fetch(event.request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
         }
-        const responseToCache = networkResponse.clone();
+        const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
         });
-        return networkResponse;
+        return response;
       }).catch(() => {
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
@@ -70,13 +76,13 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Web Push
+// Web Push Notification
 self.addEventListener('push', (event) => {
   let data = {
     title: 'P_Motor DIAG Alert',
-    body: 'ارتباط دستگاه دیاگ قطع شده است! لطفاً بررسی فرمایید.',
+    body: 'ارتباط دستگاه دیاگ قطع شده است!',
     icon: './pwa-192x192.png',
-    badge: './icon.svg',
+    badge: './pwa-192x192.png',
     vibrate: [400, 200, 400, 200, 800],
     data: { url: './?alert=true' }
   };
@@ -89,28 +95,26 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const options = {
-    body: data.body,
-    icon: data.icon,
-    badge: data.badge,
-    vibrate: data.vibrate,
-    tag: 'pmotor-disconnect-alert',
-    renotify: true,
-    requireInteraction: true,
-    data: data.data,
-    actions: [
-      { action: 'stop-alarm', title: 'قطع آژیر' },
-      { action: 'open-app', title: 'ورود به دیاگ' }
-    ]
-  };
-
-  event.waitUntil(self.registration.showNotification(data.title, options));
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon,
+      badge: data.badge,
+      vibrate: data.vibrate,
+      tag: 'pmotor-disconnect-alert',
+      renotify: true,
+      requireInteraction: true,
+      data: data.data,
+      actions: [
+        { action: 'stop-alarm', title: 'قطع آژیر' },
+        { action: 'open-app', title: 'ورود به دیاگ' }
+      ]
+    })
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || './';
-
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
@@ -120,7 +124,7 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
+        return clients.openWindow('./');
       }
     })
   );
