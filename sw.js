@@ -1,23 +1,7 @@
-// P_Motor DIAG WiFi Guardian - Service Worker (GitHub Pages compatible)
-const CACHE_NAME = 'pmotor-diag-v2';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icon.svg',
-  './pwa-192x192.png',
-  './pwa-512x512.png',
-  './apple-touch-icon.png'
-];
+// P_Motor DIAG WiFi Guardian - Production Service Worker
+const CACHE_NAME = 'pmotor-diag-v3';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('[SW] Cache addAll warning:', err);
-      });
-    })
-  );
   self.skipWaiting();
 });
 
@@ -37,48 +21,45 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // API requests را رد کن (به سرور واقعی می‌رود)
-  if (event.request.url.includes('/api/')) {
+  // Do not intercept non-GET, API, or chrome-extension requests
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return;
   }
 
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('./index.html'))
-    );
-    return;
-  }
-
+  // Network-First with Cache fallback
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
         return networkResponse;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+        });
+      })
   );
 });
 
-// Web Push
+// Real Web Push Notification listener
 self.addEventListener('push', (event) => {
   let data = {
     title: 'P_Motor DIAG Alert',
     body: 'ارتباط دستگاه دیاگ قطع شده است! لطفاً بررسی فرمایید.',
-    icon: './pwa-192x192.png',
-    badge: './icon.svg',
+    icon: '/pwa-192x192.png',
+    badge: '/icon.svg',
     vibrate: [400, 200, 400, 200, 800],
-    data: { url: './?alert=true' }
+    data: { url: '/?alert=true' }
   };
 
   if (event.data) {
@@ -104,12 +85,14 @@ self.addEventListener('push', (event) => {
     ]
   };
 
-  event.waitUntil(self.registration.showNotification(data.title, options));
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || './';
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

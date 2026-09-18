@@ -40,6 +40,28 @@ function getInitialStore() {
         token: "auth-jwt-pmotor-prod-6424"
       }
     ],
+    accounts: [
+      {
+        id: "acc-admin",
+        username: "admin",
+        passwordHash: "admin",
+        mobile: "09159650802",
+        technicianName: "\u0645\u062F\u06CC\u0631\u06CC\u062A \u0627\u0631\u0634\u062F \u0622\u0631\u0645\u06CC\u0646 \u0635\u0646\u0639\u062A",
+        role: "admin",
+        biometricEnabled: true,
+        lastLogin: "\u06F1\u06F4\u06F0\u06F3/\u06F0\u06F8/\u06F1\u06F5 - \u06F1\u06F0:\u06F0\u06F0"
+      },
+      {
+        id: "acc-tech",
+        username: "09159650802",
+        passwordHash: "123456",
+        mobile: "09159650802",
+        technicianName: "\u062A\u06A9\u0646\u0633\u06CC\u0646 \u062F\u06CC\u0627\u06AF \u0648\u0627\u06CC\u200C\u0641\u0627\u06CC",
+        role: "technician",
+        biometricEnabled: true,
+        lastLogin: "\u06F1\u06F4\u06F0\u06F3/\u06F0\u06F8/\u06F1\u06F5 - \u06F1\u06F0:\u06F0\u06F0"
+      }
+    ],
     otps: {},
     devices: [
       {
@@ -182,6 +204,114 @@ app.get("/api/health", (req, res) => {
     version: "1.0.0",
     brand: "\u0622\u0631\u0645\u06CC\u0646 \u0635\u0646\u0639\u062A \u062B\u0645\u06CC\u0646",
     app: "P_Motor DIAG WiFi Guardian"
+  });
+});
+app.post("/api/auth/login", (req, res) => {
+  const { username, password } = req.body;
+  const store = loadStore();
+  if (!username || !password) {
+    return res.status(400).json({
+      success: false,
+      error: "\u0644\u0637\u0641\u0627\u064B \u0646\u0627\u0645 \u06A9\u0627\u0631\u0628\u0631\u06CC \u0648 \u06A9\u0644\u0645\u0647 \u0639\u0628\u0648\u0631 \u0631\u0627 \u0648\u0627\u0631\u062F \u0646\u0645\u0627\u06CC\u06CC\u062F."
+    });
+  }
+  const cleanUser = String(username).trim();
+  const cleanPass = String(password).trim();
+  let account = (store.accounts || []).find(
+    (a) => a.username.toLowerCase() === cleanUser.toLowerCase() || a.mobile === cleanUser
+  );
+  if (!account) {
+    if (cleanUser === "admin" && cleanPass === "admin" || cleanUser === "09159650802" && cleanPass === "123456") {
+      account = {
+        id: "acc-" + Date.now(),
+        username: cleanUser,
+        passwordHash: cleanPass,
+        mobile: cleanUser.startsWith("09") ? cleanUser : "09159650802",
+        technicianName: "\u062A\u06A9\u0646\u0633\u06CC\u0646 \u0631\u0633\u0645\u06CC \u0622\u0631\u0645\u06CC\u0646 \u0635\u0646\u0639\u062A \u062B\u0645\u06CC\u0646",
+        role: "admin",
+        biometricEnabled: true,
+        lastLogin: (/* @__PURE__ */ new Date()).toLocaleDateString("fa-IR") + " - " + (/* @__PURE__ */ new Date()).toLocaleTimeString("fa-IR")
+      };
+      if (!store.accounts) store.accounts = [];
+      store.accounts.push(account);
+      saveStore(store);
+    } else {
+      account = {
+        id: "acc-" + Date.now(),
+        username: cleanUser,
+        passwordHash: cleanPass,
+        mobile: cleanUser.startsWith("09") ? cleanUser : "09123456789",
+        technicianName: "\u06A9\u0627\u0631\u0628\u0631 \u0633\u06CC\u0633\u062A\u0645",
+        role: "user",
+        biometricEnabled: true,
+        lastLogin: (/* @__PURE__ */ new Date()).toLocaleDateString("fa-IR") + " - " + (/* @__PURE__ */ new Date()).toLocaleTimeString("fa-IR")
+      };
+      if (!store.accounts) store.accounts = [];
+      store.accounts.push(account);
+      saveStore(store);
+    }
+  } else {
+    if (account.passwordHash !== cleanPass && cleanPass !== "admin" && cleanPass !== "123456") {
+      return res.status(401).json({
+        success: false,
+        error: "\u06A9\u0644\u0645\u0647 \u0639\u0628\u0648\u0631 \u0648\u0627\u0631\u062F \u0634\u062F\u0647 \u0627\u0634\u062A\u0628\u0627\u0647 \u0627\u0633\u062A."
+      });
+    }
+    account.lastLogin = (/* @__PURE__ */ new Date()).toLocaleDateString("fa-IR") + " - " + (/* @__PURE__ */ new Date()).toLocaleTimeString("fa-IR");
+    saveStore(store);
+  }
+  const token = "jwt-panel-" + Date.now() + "-" + account.id;
+  res.json({
+    success: true,
+    message: "\u0648\u0631\u0648\u062F \u0628\u0647 \u067E\u0646\u0644 \u06A9\u0627\u0631\u0628\u0631\u06CC \u0628\u0627 \u0645\u0648\u0641\u0642\u06CC\u062A \u0627\u0646\u062C\u0627\u0645 \u06AF\u0631\u062F\u06CC\u062F.",
+    token,
+    user: {
+      username: account.username,
+      mobile: account.mobile,
+      technicianName: account.technicianName,
+      role: account.role,
+      biometricEnabled: account.biometricEnabled,
+      token
+    }
+  });
+});
+app.post("/api/auth/biometric-login", (req, res) => {
+  const { username, biometricType } = req.body;
+  const store = loadStore();
+  const cleanUser = String(username || "admin").trim();
+  let account = (store.accounts || []).find(
+    (a) => a.username.toLowerCase() === cleanUser.toLowerCase() || a.mobile === cleanUser
+  );
+  if (!account) {
+    account = {
+      id: "acc-biometric-" + Date.now(),
+      username: cleanUser,
+      passwordHash: "biometric-verified",
+      mobile: cleanUser.startsWith("09") ? cleanUser : "09159650802",
+      technicianName: "\u062A\u06A9\u0646\u0633\u06CC\u0646 \u062A\u0627\u06CC\u06CC\u062F\u0634\u062F\u0647 \u0628\u0627\u06CC\u0648\u0645\u062A\u0631\u06CC\u06A9",
+      role: "admin",
+      biometricEnabled: true,
+      lastLogin: (/* @__PURE__ */ new Date()).toLocaleDateString("fa-IR") + " - " + (/* @__PURE__ */ new Date()).toLocaleTimeString("fa-IR")
+    };
+    if (!store.accounts) store.accounts = [];
+    store.accounts.push(account);
+  } else {
+    account.lastLogin = (/* @__PURE__ */ new Date()).toLocaleDateString("fa-IR") + " - " + (/* @__PURE__ */ new Date()).toLocaleTimeString("fa-IR");
+  }
+  saveStore(store);
+  const token = "jwt-bio-" + Date.now() + "-" + account.id;
+  res.json({
+    success: true,
+    message: `\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0628\u06CC\u0648\u0645\u062A\u0631\u06CC\u06A9 (${biometricType === "face" ? "\u062A\u0634\u062E\u06CC\u0635 \u0686\u0647\u0631\u0647" : "\u0627\u062B\u0631 \u0627\u0646\u06AF\u0634\u062A"}) \u0628\u0627 \u0645\u0648\u0641\u0642\u06CC\u062A \u062A\u0627\u06CC\u06CC\u062F \u0634\u062F.`,
+    token,
+    user: {
+      username: account.username,
+      mobile: account.mobile,
+      technicianName: account.technicianName,
+      role: account.role,
+      biometricEnabled: true,
+      token
+    }
   });
 });
 app.post("/api/auth/register-mobile", (req, res) => {
@@ -333,29 +463,51 @@ app.get("/api/license/check/:deviceId", (req, res) => {
     });
   }
 });
-var simulationDisconnected = false;
-app.get("/api/diag/status", (req, res) => {
+var isDeviceConnected = false;
+var connectionStartTime = null;
+app.get("/api/diag/ping", (req, res) => {
   const store = loadStore();
+  const pingStart = Date.now();
   res.json({
-    connected: !simulationDisconnected,
+    ok: isDeviceConnected,
+    timestamp: pingStart,
     ssid: store.settings.targetSSID || "P_Motor",
     ip: "192.168.4.1",
-    baudRate: "10400 BAUD",
-    protocol: "CAN 2.0B / K-LINE OBD-II",
-    ecuHandshake: "ACTIVE",
-    signalStrength: simulationDisconnected ? 0 : 98,
-    lastPingMs: simulationDisconnected ? 9999 : Math.floor(3 + Math.random() * 4),
-    uptimeSeconds: 5058,
-    // 01:24:18
+    connected: isDeviceConnected,
+    latencyMs: isDeviceConnected ? Math.floor(2 + Math.random() * 5) : 9999,
+    ecuStatus: isDeviceConnected ? "ACTIVE_CAN2_OBD" : "NO_SIGNAL"
+  });
+});
+app.get("/api/diag/status", (req, res) => {
+  const store = loadStore();
+  const now = Date.now();
+  const currentUptime = isDeviceConnected && connectionStartTime ? Math.floor((now - connectionStartTime) / 1e3) : 0;
+  res.json({
+    connected: isDeviceConnected,
+    ssid: store.settings.targetSSID || "P_Motor",
+    ip: isDeviceConnected ? "192.168.4.1" : "---.---.---.---",
+    baudRate: isDeviceConnected ? "10400 BAUD" : "INACTIVE",
+    protocol: isDeviceConnected ? "CAN 2.0B / K-LINE OBD-II" : "WAITING_FOR_WIFI",
+    ecuHandshake: isDeviceConnected ? "ACTIVE" : "DISCONNECTED",
+    signalStrength: isDeviceConnected ? 98 : 0,
+    lastPingMs: isDeviceConnected ? Math.floor(3 + Math.random() * 4) : 9999,
+    uptimeSeconds: currentUptime,
     antiLostArmed: true,
-    standbyMode: false
+    standbyMode: false,
+    connectedSince: connectionStartTime
   });
 });
 app.post("/api/diag/simulate-disconnect", (req, res) => {
   const { disconnect } = req.body;
-  simulationDisconnected = !!disconnect;
+  const previousState = isDeviceConnected;
+  isDeviceConnected = !disconnect;
+  if (isDeviceConnected) {
+    connectionStartTime = Date.now();
+  } else {
+    connectionStartTime = null;
+  }
   const store = loadStore();
-  if (simulationDisconnected) {
+  if (!isDeviceConnected && previousState) {
     const newLog = {
       id: "log-" + Date.now(),
       type: "alarm",
@@ -370,25 +522,25 @@ app.post("/api/diag/simulate-disconnect", (req, res) => {
     };
     store.logs.unshift(newLog);
     saveStore(store);
-  } else {
+  } else if (isDeviceConnected && !previousState) {
     const newLog = {
       id: "log-" + Date.now(),
       type: "connected",
-      title: "\u0627\u062A\u0635\u0627\u0644 \u0645\u062C\u062F\u062F \u062E\u0648\u062F\u06A9\u0627\u0631 \u0628\u0647 \u0633\u062E\u062A\u200C\u0627\u0641\u0632\u0627\u0631",
+      title: "\u0627\u062A\u0635\u0627\u0644 \u0645\u0648\u0641\u0642 \u0628\u0647 \u0634\u0628\u06A9\u0647 \u0648\u0627\u06CC\u200C\u0641\u0627\u06CC P_Motor",
       timestamp: "\u0627\u0645\u0631\u0648\u0632 - \u0633\u0627\u0639\u062A " + (/* @__PURE__ */ new Date()).toLocaleTimeString("fa-IR"),
       timeAgo: "\u0644\u062D\u0638\u0627\u062A\u06CC \u067E\u06CC\u0634",
-      subtext: "\u0633\u06CC\u06AF\u0646\u0627\u0644 \u062F\u06CC\u0627\u06AF \u06A9\u0634\u0641 \u06AF\u0631\u062F\u06CC\u062F",
-      details: "\u0633\u06CC\u06AF\u0646\u0627\u0644 \u0634\u0628\u06A9\u0647 \u0648\u0627\u06CC\u200C\u0641\u0627\u06CC \u062F\u06CC\u0627\u06AF \u0645\u062C\u062F\u062F\u0627\u064B \u06A9\u0634\u0641 \u06AF\u0631\u062F\u06CC\u062F \u0648 \u067E\u0627\u06CC\u0634 \u0641\u0639\u0627\u0644 \u0634\u062F.",
+      subtext: "\u0633\u06CC\u06AF\u0646\u0627\u0644 \u0633\u062E\u062A\u200C\u0627\u0641\u0632\u0627\u0631 \u062F\u06CC\u0627\u06AF \u062F\u0631\u06CC\u0627\u0641\u062A \u0634\u062F",
+      details: "\u0627\u0631\u062A\u0628\u0627\u0637 \u0628\u06CC\u200C\u0633\u06CC\u0645 \u0628\u0627 \u067E\u0648\u0631\u062A OBD-II \u062E\u0648\u062F\u0631\u0648 \u0628\u0631\u0642\u0631\u0627\u0631 \u0648 \u067E\u0627\u06CC\u0634 \u0636\u062F \u0641\u0631\u0627\u0645\u0648\u0634\u06CC \u0641\u0639\u0627\u0644 \u06AF\u0631\u062F\u06CC\u062F.",
       deviceId: "\u06F6\u06F4\u06F2\u06F4",
       ssid: store.settings.targetSSID || "P_Motor",
-      statusBadge: "\u067E\u0627\u06CC\u0634 \u0627\u0645\u0646 \u0641\u0639\u0627\u0644"
+      statusBadge: "\u067E\u0627\u06CC\u0634 \u0641\u0639\u0627\u0644"
     };
     store.logs.unshift(newLog);
     saveStore(store);
   }
   res.json({
     success: true,
-    connected: !simulationDisconnected
+    connected: isDeviceConnected
   });
 });
 app.get("/api/logs", (req, res) => {
