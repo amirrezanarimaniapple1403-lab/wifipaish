@@ -1,10 +1,10 @@
 {
-  "id": "./",
+  "id": "/wifipaish/",
   "name": "P_Motor DIAG WiFi Guardian",
   "short_name": "P_Motor DIAG",
   "description": "سامانه هوشمند پایش و محافظت اتصال دیاگ خودرو - آرمین صنعت ثمین",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/wifipaish/",
+  "scope": "/wifipaish/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#E6F7FF",
@@ -13,19 +13,19 @@
   "lang": "fa",
   "icons": [
     {
-      "src": "./pwa-192x192.png",
+      "src": "/wifipaish/pwa-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./pwa-512x512.png",
+      "src": "/wifipaish/pwa-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./pwa-maskable-512x512.png",
+      "src": "/wifipaish/pwa-maskable-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
